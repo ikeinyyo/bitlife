@@ -11,13 +11,27 @@ This version has breaking changes — APIs, conventions, and file structure may 
 Goal: steer development toward small, composable components organized by feature.
 
 - **Composition over inheritance:** Whenever possible, create small components and reuse them via composition (props, children, HOCs, or hooks) rather than inheritance or monolithic components.
-- **Arrow functions (fat arrow):** Keep components as arrow functions. Example pattern:
+- **Arrow functions (fat arrow):** Keep components as arrow functions and prefer fat-arrow methods inside components too. Example patterns:
 
   const MyComponent: React.FC<MyProps> = ({ propA }) => {
+  const handleClick = () => {
+  console.log(propA);
+  };
+
   return (
-  <div>{propA}</div>
-  )
-  }
+  <div onClick={handleClick}>{propA}</div>
+  );
+  };
+
+  const useExample = () => {
+  const doSomething = () => {
+  return true;
+  };
+
+  return {
+  doSomething,
+  };
+  };
 
 - **Feature-based structure:** Add a `/features` folder at the project root. Each feature should group its components and resources:
 
