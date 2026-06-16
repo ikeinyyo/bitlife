@@ -1,65 +1,157 @@
-import Image from "next/image";
+"use client";
 
-export default function Home() {
+import React, { useMemo, useState } from "react";
+import { NavBar } from "../components/NavBar";
+import { useRouter } from "next/navigation";
+import { experiments, categories, Experiment } from "./experiments/data";
+
+const HomePage = () => {
+  const [query, setQuery] = useState("");
+  const [category, setCategory] = useState<string | null>(null);
+  const [sortBy, setSortBy] = useState<"title" | "category" | null>("title");
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
+
+  const filtered = useMemo(() => {
+    return experiments.filter((e) => {
+      if (category && e.category !== category) return false;
+      const text = (e.title + " " + e.description).toLowerCase();
+      if (query && !text.includes(query.toLowerCase())) return false;
+      return true;
+    });
+  }, [query, category]);
+
+  const sorted = useMemo(() => {
+    if (!sortBy) return filtered;
+    const items = [...filtered];
+    items.sort((a, b) => {
+      const A = (a[sortBy] || "").toString().toLowerCase();
+      const B = (b[sortBy] || "").toString().toLowerCase();
+      const cmp = A.localeCompare(B);
+      return sortDir === "asc" ? cmp : -cmp;
+    });
+    return items;
+  }, [filtered, sortBy, sortDir]);
+
+  const toggleSort = (col: "title" | "category") => {
+    if (sortBy === col) {
+      setSortDir((d) => (d === "asc" ? "desc" : "asc"));
+    } else {
+      setSortBy(col);
+      setSortDir("asc");
+    }
+  };
+
+  const router = useRouter();
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+    <div className="min-h-screen flex flex-col bg-background text-foreground">
+      <NavBar />
+      <main className="app-container py-8">
+        <header className="mb-6">
+          <h1 className="text-3xl font-bold">Experiments</h1>
+          <p className="text-muted mt-2">
+            A playground of life-generation experiments.
           </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
+        </header>
+
+        <section className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setCategory(null)}
+              className={`px-3 py-1 rounded-md ${category === null ? "btn-accent" : "border"}`}
+            >
+              All
+            </button>
+            {categories.map((c) => (
+              <button
+                key={c}
+                onClick={() => setCategory(c)}
+                className={`px-3 py-1 rounded-md ${category === c ? "btn-accent" : "border"}`}
+              >
+                {c}
+              </button>
+            ))}
+          </div>
+
+          <div className="flex items-center gap-2">
+            <input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search experiments"
+              className="border rounded-md px-3 py-2 w-64"
             />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
+          </div>
+        </section>
+
+        <section>
+          {sorted.length === 0 ? (
+            <p className="text-muted">No experiments found.</p>
+          ) : (
+            <div className="overflow-hidden rounded-md border border-gray-200 dark:border-white/[.06] w-full">
+              <table className="min-w-full w-full table-fixed">
+                <colgroup>
+                  <col className="w-[65%]" />
+                  <col className="w-[35%]" />
+                </colgroup>
+                <thead className="table-header">
+                  <tr>
+                    <th
+                      onClick={() => toggleSort("title")}
+                      className="px-4 py-3 text-left text-sm font-medium cursor-pointer border-b border-[var(--accent)]/40"
+                    >
+                      Experiment{" "}
+                      {sortBy === "title"
+                        ? sortDir === "asc"
+                          ? "▲"
+                          : "▼"
+                        : ""}
+                    </th>
+                    <th
+                      onClick={() => toggleSort("category")}
+                      className="px-4 py-3 text-left text-sm font-medium cursor-pointer border-b border-[var(--accent)]/40"
+                    >
+                      Category{" "}
+                      {sortBy === "category"
+                        ? sortDir === "asc"
+                          ? "▲"
+                          : "▼"
+                        : ""}
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {sorted.map((e: Experiment) => (
+                    <tr
+                      key={e.id}
+                      className="border-t border-[var(--accent)]/30 dark:border-[var(--accent)]/20 table-row cursor-pointer hover:bg-gray-50 dark:hover:bg-white/[.03]"
+                      onClick={() => router.push(e.path)}
+                    >
+                      <td className="px-4 py-3">
+                        <div className="flex items-start gap-3">
+                          <div className="text-2xl">{e.icon ?? "🔬"}</div>
+                          <div>
+                            <div className="text-sm font-semibold">
+                              {e.title}
+                            </div>
+                            <div className="text-sm text-muted">
+                              {e.description}
+                            </div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 align-top">
+                        <div className="text-sm">{e.category}</div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </section>
       </main>
     </div>
   );
-}
+};
+
+export default HomePage;
