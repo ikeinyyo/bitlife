@@ -5,6 +5,9 @@ export type Experiment = {
   category: string;
   path: string;
   icon?: string;
+  difficulty?: string; // e.g. "101"
+  tags?: string[];
+  status?: "draft" | "published" | "hidden";
 };
 
 export const experiments: Experiment[] = [
@@ -15,6 +18,9 @@ export const experiments: Experiment[] = [
     category: "Simulation",
     path: "/experiments/game-of-life",
     icon: "🟩",
+    difficulty: "101",
+    tags: ["simulation", "cellular"],
+    status: "published",
   },
   {
     id: "perceptron",
@@ -23,9 +29,15 @@ export const experiments: Experiment[] = [
     category: "Machine Learning",
     path: "/experiments/perceptron",
     icon: "🧠",
+    difficulty: "201",
+    tags: ["ml", "neural-network"],
+    status: "hidden",
   },
 ];
 
-export const categories = Array.from(
-  new Set(experiments.map((e) => e.category)),
-);
+export const categories = [
+  "Simulation",
+  "Machine Learning",
+  "Visualization",
+  "Tools",
+];
